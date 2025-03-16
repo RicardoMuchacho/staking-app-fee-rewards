@@ -1,66 +1,57 @@
-## Foundry
+# ⚖️ Staking App
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Solidity staking app built with [Foundry](https://book.getfoundry.sh/). The project includes:
 
-Foundry consists of:
+- **Staking App Contract**: Allows users to stake tokens, withdraw their stake, and claim rewards.
+- **Staking Token Contract**: An ERC20 token used for staking.
+- **100% Test Coverage** ensuring reliable functionality and security.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## 📊 Contracts Overview
 
-## Documentation
+### StakingApp.sol
+This contract handles staking logic, withdrawals, and reward claims.
 
-https://book.getfoundry.sh/
+| Function             | Description                                           |
+|---------------------|-------------------------------------------------------|
+| `stakeTokens(uint256 _amount)`  | Allows users to stake tokens with a fixed amount of 10 ETH. |
+| `withdraw()`                   | Allows users to withdraw their staked tokens.                |
+| `claimRewards()`               | Enables users to claim their accumulated rewards.             |
+| `changeStakingPeriod(uint256 _period)` | Allows the owner to modify the staking period.               |
+| `receive()`                    | Allows the owner to deposit ETH as staking rewards.           |
 
-## Usage
+### StakingToken.sol
+This ERC20 token contract represents the staking token.
 
-### Build
+| Function             | Description                                           |
+|---------------------|-------------------------------------------------------|
+| `constructor(string memory _name, string memory _symbol)`  | Deploys the ERC20 token with a specified name and symbol. |
+| `mint(uint256 tokenAmount)` | Mints new tokens and assigns them to the caller's address.      |
 
-```shell
-$ forge build
+## ✅ Testing Coverage
+
+| File                 | % Lines | % Statements | % Branches | % Funcs |
+|----------------------|----------|---------------|-------------|----------|
+| src/StakingApp.sol    | 100.00% (26/26) | 100.00% (23/23)       | 100.00% (11/11)    | 100.00% (6/6) |
+| src/StakingToken.sol  | 100.00% (2/2) | 100.00% (1/1)       | 100.00% (0/0)    | 100.00% (1/1) |
+| **Total**             | **100.00%** | **100.00%** | **100.00%** | **100.00%** |
+
+## ⚙️ How to Run the Project
+
+### Prerequisites
+- Install Foundry: [Foundry Installation Guide](https://book.getfoundry.sh/getting-started/installation.html)
+
+### Installation
+```bash
+forge install
 ```
 
-### Test
-
-```shell
-$ forge test
+### Compilation
+```bash
+forge build
 ```
 
-### Format
-
-```shell
-$ forge fmt
+### Testing
+```bash
+forge test --coverage
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```

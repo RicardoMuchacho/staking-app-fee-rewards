@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract StakingApp is Ownable {
     uint256 public stakingFixedAmount = 10 ether;
-    uint256 public stakingPeriod =  1 days;
+    uint256 public stakingPeriod = 1 days;
     address public stakingToken;
     mapping(address => uint256) public userBalance;
     mapping(address => uint256) public lastActivity;
@@ -17,8 +17,8 @@ contract StakingApp is Ownable {
     event rewardsClaimEvent(uint256);
     event depositRewardsEvent(uint256);
 
-    constructor(address _owner, address _stakingToken) Ownable(_owner){
-       stakingToken = _stakingToken;
+    constructor(address _owner, address _stakingToken) Ownable(_owner) {
+        stakingToken = _stakingToken;
     }
 
     // deposit token
@@ -52,12 +52,14 @@ contract StakingApp is Ownable {
     // claim rewards
     function claimRewards() external {
         require(userBalance[msg.sender] == stakingFixedAmount, "No stake");
-        require(block.timestamp - lastActivity[msg.sender] >= stakingPeriod, "Staking period not ended");
+        require(
+            block.timestamp - lastActivity[msg.sender] >= stakingPeriod, "Staking period not ended"
+        );
 
         uint256 reward = userBalance[msg.sender] / 100; // 1% daily reward
-        
-        (bool success ,) = msg.sender.call{value: reward}("");
-        if(!success) revert();
+
+        (bool success,) = msg.sender.call{ value: reward }("");
+        if (!success) revert();
 
         emit rewardsClaimEvent(reward);
     }
@@ -70,4 +72,4 @@ contract StakingApp is Ownable {
     receive() external payable onlyOwner {
         emit depositRewardsEvent(msg.value);
     }
-} 
+}

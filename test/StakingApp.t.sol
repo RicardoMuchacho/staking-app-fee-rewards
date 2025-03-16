@@ -28,8 +28,8 @@ contract StakingAppTest is Test {
     }
 
     function test_contractsDeployed() external view {
-       assert(address(stakingApp) != address(0)); 
-       assert(address(stakingToken) != address(0)); 
+        assert(address(stakingApp) != address(0));
+        assert(address(stakingToken) != address(0));
     }
 
     // // stake tokens
@@ -37,7 +37,7 @@ contract StakingAppTest is Test {
         vm.startPrank(owner);
 
         mintSTK(fixedStakingAmount);
- 
+
         uint256 userTokensBefore = stakingApp.userBalance(owner);
         uint256 lastActivityBefore = stakingApp.lastActivity(owner);
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
@@ -49,15 +49,15 @@ contract StakingAppTest is Test {
         assertEq(userTokensAfter - userTokensBefore, fixedStakingAmount);
         assertEq(lastActivityBefore, 0);
         assertEq(lastActivityAfter, block.timestamp);
-        
+
         vm.stopPrank();
     }
 
     function test_revertStakeMoreThanOnce() external {
         vm.startPrank(owner);
 
-        mintSTK(fixedStakingAmount*2);
- 
+        mintSTK(fixedStakingAmount * 2);
+
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
         stakingApp.stakeTokens(fixedStakingAmount);
 
@@ -72,7 +72,7 @@ contract StakingAppTest is Test {
 
         vm.expectRevert("Amount must be 10 ETH");
         stakingApp.stakeTokens(100);
-        
+
         vm.stopPrank();
     }
 
@@ -90,7 +90,7 @@ contract StakingAppTest is Test {
         uint256 tokensAfter = stakingToken.balanceOf(randomUser);
 
         assertEq(tokensBefore + tokensStakedBefore, tokensAfter);
-        
+
         vm.stopPrank();
     }
 
@@ -124,7 +124,7 @@ contract StakingAppTest is Test {
         uint256 rewards = stakingApp.userBalance(randomUser) / 100; // 1% daily reward
         assertEq(ethAfter - ethBefore, rewards);
         assertEq(ethClaimableBefore - ethClaimableAfter, rewards);
-        
+
         vm.stopPrank();
     }
 
@@ -133,7 +133,7 @@ contract StakingAppTest is Test {
 
         vm.expectRevert("No stake");
         stakingApp.claimRewards();
-        
+
         vm.stopPrank();
     }
 
@@ -146,7 +146,7 @@ contract StakingAppTest is Test {
 
         vm.expectRevert("Staking period not ended");
         stakingApp.claimRewards();
-        
+
         vm.stopPrank();
     }
 
@@ -171,12 +171,12 @@ contract StakingAppTest is Test {
         vm.deal(owner, 2 ether);
 
         uint256 balanceBefore = address(stakingApp).balance;
-        (bool success ,) = address(stakingApp).call{value: depositAmount}("");
+        (bool success,) = address(stakingApp).call{ value: depositAmount }("");
         require(success, "Not owner");
         uint256 balanceAfter = address(stakingApp).balance;
 
         assertEq(balanceAfter - balanceBefore, depositAmount);
-        
+
         vm.stopPrank();
     }
 
@@ -184,18 +184,18 @@ contract StakingAppTest is Test {
         uint256 depositAmount = 1 ether;
         vm.startPrank(randomUser);
         vm.deal(randomUser, 2 ether);
-        
+
         vm.expectRevert();
-        (bool success ,) = address(stakingApp).call{value: depositAmount}("");
+        (bool success,) = address(stakingApp).call{ value: depositAmount }("");
         require(success, "Not owner");
-        
+
         vm.stopPrank();
     }
 
     // change staking period
     function test_revertChangeStakingPeriodNotOwner() external {
         vm.startPrank(randomUser);
-        
+
         vm.expectRevert();
         stakingApp.changeStakingPeriod(2 hours);
 
@@ -204,7 +204,7 @@ contract StakingAppTest is Test {
 
     function test_changeStakingPeriod() external {
         vm.startPrank(owner);
-        
+
         stakingApp.changeStakingPeriod(2 hours);
         assertEq(stakingApp.stakingPeriod(), 2 hours);
 

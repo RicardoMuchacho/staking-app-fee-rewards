@@ -7,26 +7,27 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Test } from "forge-std/Test.sol";
 
 contract StakingTokenTest is Test {
-  StakingToken stakingToken;
-  string name = "Staking Test";
-  string symbol = "STK"; 
+    StakingToken stakingToken;
+    string name = "Staking Test";
+    string symbol = "STK";
 
-  address randomUser = vm.addr(2);
-  function setUp() public {
-     stakingToken = new StakingToken(name, symbol);
-  }
+    address randomUser = vm.addr(2);
 
-  function test_mintCorrectly() public { 
-    uint256 tokenAmount = 2 ether;
+    function setUp() public {
+        stakingToken = new StakingToken(name, symbol);
+    }
 
-    vm.startPrank(randomUser);
+    function test_mintCorrectly() public {
+        uint256 tokenAmount = 2 ether;
 
-    uint256 balanceBefore = IERC20(address(stakingToken)).balanceOf(randomUser);
-    stakingToken.mint(tokenAmount);
-    uint256 balanceAfter = stakingToken.balanceOf(randomUser); // better, stakingToken is already an ERC-20 instance
+        vm.startPrank(randomUser);
 
-    assertEq(tokenAmount, balanceAfter - balanceBefore);
+        uint256 balanceBefore = IERC20(address(stakingToken)).balanceOf(randomUser);
+        stakingToken.mint(tokenAmount);
+        uint256 balanceAfter = stakingToken.balanceOf(randomUser); // better, stakingToken is already an ERC-20 instance
 
-    vm.stopPrank();
-  }
+        assertEq(tokenAmount, balanceAfter - balanceBefore);
+
+        vm.stopPrank();
+    }
 }

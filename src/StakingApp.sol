@@ -3,7 +3,9 @@
 pragma solidity >= 0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./IStakingToken.sol";
 
 contract StakingApp is Ownable {
     uint256 public stakingFixedAmount = 10 ether;
@@ -58,18 +60,12 @@ contract StakingApp is Ownable {
 
         uint256 reward = userBalance[msg.sender] / 100; // 1% daily reward
 
-        (bool success,) = msg.sender.call{ value: reward }("");
-        if (!success) revert();
+        IStakingToken(stakingToken).distributeStakingRewards(msg.sender, reward);
 
         emit rewardsClaimEvent(reward);
     }
 
     function changeStakingPeriod(uint256 _period) external onlyOwner {
         stakingPeriod = _period;
-    }
-
-    // deposit rewards
-    receive() external payable onlyOwner {
-        emit depositRewardsEvent(msg.value);
     }
 }

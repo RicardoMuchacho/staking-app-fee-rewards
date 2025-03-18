@@ -5,7 +5,7 @@ pragma solidity >= 0.8.24;
 import "../src/StakingApp.sol";
 import "../src/StakingToken.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Test } from "forge-std/Test.sol";
+import { Test, console } from "forge-std/Test.sol";
 
 contract StakingAppTest is Test {
     StakingApp stakingApp;
@@ -36,7 +36,7 @@ contract StakingAppTest is Test {
     function test_stakeCorrectly() external {
         vm.startPrank(owner);
 
-        mintSTK(fixedStakingAmount);
+        buySTK(fixedStakingAmount, owner);
 
         uint256 userTokensBefore = stakingApp.userBalance(owner);
         uint256 lastActivityBefore = stakingApp.lastActivity(owner);
@@ -56,7 +56,7 @@ contract StakingAppTest is Test {
     function test_revertStakeMoreThanOnce() external {
         vm.startPrank(owner);
 
-        mintSTK(fixedStakingAmount * 2);
+        buySTK(fixedStakingAmount * 2, owner);
 
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
         stakingApp.stakeTokens(fixedStakingAmount);
@@ -80,7 +80,7 @@ contract StakingAppTest is Test {
     function test_withdraw() external {
         vm.startPrank(randomUser);
 
-        mintSTK(fixedStakingAmount);
+        buySTK(fixedStakingAmount, randomUser);
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
         stakingApp.stakeTokens(fixedStakingAmount);
 
@@ -105,25 +105,42 @@ contract StakingAppTest is Test {
 
     // claim rewards
     function test_claimRewards() external {
-        //Simulate rewards deposited by owner
-        vm.deal(address(stakingApp), 10 ether);
+        // Grant Staking role to stakingApp contract
+        vm.startPrank(owner);
+        stakingToken.grantStakeRole(address(stakingApp));
+        vm.stopPrank();
 
         vm.startPrank(randomUser);
 
-        mintSTK(fixedStakingAmount);
+        buySTK(fixedStakingAmount, randomUser);
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
         stakingApp.stakeTokens(fixedStakingAmount);
 
         uint256 ethBefore = randomUser.balance;
-        uint256 ethClaimableBefore = address(stakingApp).balance;
+        uint256 ethFeesBefore = stakingToken.fees();
         vm.warp(block.timestamp + 1 days);
         stakingApp.claimRewards();
         uint256 ethAfter = randomUser.balance;
-        uint256 ethClaimableAfter = address(stakingApp).balance;
+        uint256 ethFeesAfter = stakingToken.fees();
 
         uint256 rewards = stakingApp.userBalance(randomUser) / 100; // 1% daily reward
         assertEq(ethAfter - ethBefore, rewards);
-        assertEq(ethClaimableBefore - ethClaimableAfter, rewards);
+        assertEq(ethFeesBefore - ethFeesAfter, rewards);
+        console.log(ethFeesBefore, ethFeesAfter);
+
+        vm.stopPrank();
+    }
+
+    function test_revertClaimRewardsNoStakeRole() external {
+        vm.startPrank(randomUser);
+
+        buySTK(fixedStakingAmount, randomUser);
+        IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
+        stakingApp.stakeTokens(fixedStakingAmount);
+
+        vm.warp(block.timestamp + 1 days);
+        vm.expectRevert();
+        stakingApp.claimRewards();
 
         vm.stopPrank();
     }
@@ -140,54 +157,12 @@ contract StakingAppTest is Test {
     function test_revertClaimRewardsInvalidPeriod() external {
         vm.startPrank(randomUser);
 
-        mintSTK(fixedStakingAmount);
+        buySTK(fixedStakingAmount, randomUser);
         IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
         stakingApp.stakeTokens(fixedStakingAmount);
 
         vm.expectRevert("Staking period not ended");
         stakingApp.claimRewards();
-
-        vm.stopPrank();
-    }
-
-    function test_revertClaimRewardsNoRewards() external {
-        vm.startPrank(randomUser);
-
-        mintSTK(fixedStakingAmount);
-        IERC20(stakingToken).approve(address(stakingApp), fixedStakingAmount);
-        stakingApp.stakeTokens(fixedStakingAmount);
-
-        vm.warp(block.timestamp + stakingApp.stakingPeriod());
-        vm.expectRevert();
-        stakingApp.claimRewards();
-
-        vm.stopPrank();
-    }
-
-    // deposit rewards
-    function test_depositRewards() external {
-        uint256 depositAmount = 1 ether;
-        vm.startPrank(owner);
-        vm.deal(owner, 2 ether);
-
-        uint256 balanceBefore = address(stakingApp).balance;
-        (bool success,) = address(stakingApp).call{ value: depositAmount }("");
-        require(success, "Not owner");
-        uint256 balanceAfter = address(stakingApp).balance;
-
-        assertEq(balanceAfter - balanceBefore, depositAmount);
-
-        vm.stopPrank();
-    }
-
-    function test_revertDepositRewardsNotOwner() external {
-        uint256 depositAmount = 1 ether;
-        vm.startPrank(randomUser);
-        vm.deal(randomUser, 2 ether);
-
-        vm.expectRevert();
-        (bool success,) = address(stakingApp).call{ value: depositAmount }("");
-        require(success, "Not owner");
 
         vm.stopPrank();
     }
@@ -211,9 +186,8 @@ contract StakingAppTest is Test {
         vm.stopPrank();
     }
 
-    function mintSTK(uint256 _amount) internal {
-        // vm.startPrank(_account);
-        stakingToken.mint(_amount);
-        // vm.stopPrank();
+    function buySTK(uint256 _ethAmount, address _account) internal {
+        vm.deal(_account, _ethAmount);
+        stakingToken.buyTokens{ value: _ethAmount }();
     }
 }
